@@ -514,7 +514,9 @@ figure {
 
 .fh5co-grid {
   height: 302px;
-  background-size: cover;
+  /*background-size: cover;*/
+  background-size: contain;
+  background-repeat: no-repeat;
   background-position: center center;
   margin-bottom: 30px;
   position: relative;
@@ -522,6 +524,7 @@ figure {
   -moz-border-radius: 7px;
   -ms-border-radius: 7px;
   border-radius: 7px;
+
 }
 
 .fh5co-grid-graphs {

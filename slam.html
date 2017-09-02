@@ -88,8 +88,8 @@
 				<div class="row">
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
 						<p>
-							I decided to create this after wondering whether a group of particles who all mutally repel each other would eventually arrange
-							themselves into a pattern such that the mutual repulsion stops any of them moving.
+							I decided to create this because I am part of a student society that builds underwater autonomous vehicles and so I need experience with
+							localisation and mapping algorithms when it comes to writing the software for the vehicle.
 						</p>
 
 					</div>
@@ -98,98 +98,107 @@
 			<div class="container">
 				<div class="row">
 					<p>
-						I created this C# form app as just a quick test of this idea. It consists of a cirlce and 100 particles initially inside the circle
-						All the particles experience a repulsive force from the other particles and from the circle walls in accordance with an inverse square
-						law. The result can be seen in this video.
+						To display the simulated vehicle and particle population I created a program in C++ using <a href="https://www.sfml-dev.org/"> SFML.</a>
+					</p>
+					<p>
+						Before adding the mapping functionality to the program I first created a particle filter which localises the vehicle given a perfect map of its
+						surroundings but noisy observations of distances to landmarks and noisy measurements of vehicle movement. The particle filter should then
+						combine this information to extract a more precise estimate of the robot location than using either of these two measurements alone could give.
+					</p>
+					<p>
+						The following video shows this first iteration of the program
 					</p>
 				</div>
 			</div>
 			<div class="container">
 				<div class="row">
-					<div class="col-md-4 text-center animate-box">						
-						<iframe width="1120" height="630" src="https://www.youtube.com/embed/5Yr4sspW0Zg" frameborder="0" allowfullscreen></iframe>	
+					<div class="col-md-4 text-center animate-box">
+						<iframe width="1120" height="630" src="https://www.youtube.com/embed/3nv8LHdxHZQ" frameborder="0" allowfullscreen></iframe>
 					</div>
 				</div>
 			</div>
 			<div class="container">
 				<div class="row">
 					<p>
-						As you can quite clearly see in the video the particles don't arrange themselves into a nice neat pattern as I had naively thought.
-						Though this had me wondering about what happens at longer time scales than the 2 minute clip. Since fast moving particles leave the circle
-						overcoming its repulsion, does the number of particles in the circle at least tend to a value where some sort of equilibrium is reached?
+						The left map shows the true environment, the black squares being landmarks and the blue dot being the true robot position.
+						The right map shows the distribution of particles and the red circle shows the true robot position. As you can see the particles
+						do clump together at the robot's location albeit with an offset which I will talk about later.
 					</p>
 					<p>
-						Running the simulation over many iterations I ended up with the following graph for number of particles remaining against time.
+						The particle filter algorithm used is as follows:
+						<ol>
+							<li> The vehicle is told to move a set amount and then the vehicle moves an amount based on this but with random noise added to simulate
+								imperfect conditions. All the particles are then moved based on the move amount request sent to the vehicle </li>
+							<li>The vehicle generates noisy measurements of distance and angle to all the landmarks on the map. (This simulation assumes the 
+								landmark extraction problem	has already been solved for simplicity).
+							</li>
+							<li> For each particle:
+								<ol>
+									<li> Find the set of observations the vehicle would have observed had it been at this particles location. </li>
+									<li> For each of the particle's observations, find the difference between this observation and the corresponding real observation
+										and use a guassian distribution to extract the probability of making that observation. Then multiply all the probabilities for
+										all the observations together to get an overall probability for this particle which becomes its weight </li>
+								</ol>
+							</li>
+							<li> Resample from the population of particles by randomly choosing particles from the current population to be moved into the new
+								population, giving a higher likelihood of being chosen to particles with a higher weight </li>
+							<li> Add a certain number of new random particles into the new population to deal with large unexpected movements of the vehicle </li>							 
+						</ol>
+					</p>
+					<p>
+						Regarding the final step in this algorithm, I used a value of 30% new particles in the new population which gives the particle filter robustness
+						against the vehicle being picked up and moved to a new location as shown in the following video 
 					</p>
 				</div>
 			</div>
 			<div class="container">
 				<div class="row">
-					<center>
-						<div class="fh5co-grid-graphs animate-box" style="background-image: url(images/particle_simulator/particles_over_time.PNG);">
-						</div>
-					</center>
+					<div class="col-md-4 text-center animate-box">
+						<iframe width="1120" height="630" src="https://www.youtube.com/embed/Tq2KfiCUaF8" frameborder="0" allowfullscreen></iframe>
+					</div>
 				</div>
 			</div>
 			<div class="container">
 				<div class="row">
 					<p>
-						As you can see the number of particles does indeed tend to a minimum value over time. But then what about the average speed of the particles?
-						It makes sense to be fast at the start when there is a lot of chaotic motion but then does it too tend to a minimum speed over time?
+						To then add the mapping functionality the particle filter starts with an empty map and when a new set of observations comes in, use the
+						current best estimate of the vehicle location and trigonometry to add landmarks to the estimated map. Then use these estimated landmarks
+						when weighting the particle population. As more observations come in the map can then be fine tuned using a weighted average of the current
+						map and the new estimates of the landmarks.
 					</p>
 					<p>
-						Running the simulation over many cycles again, I get the following result for the average speed of the particles over time.
+						The result of this can be seen in the following video
 					</p>
 				</div>
 			</div>
 			<div class="container">
 				<div class="row">
-					<center>
-						<div class="fh5co-grid-graphs animate-box" style="background-image: url(images/particle_simulator/speed_over_time.PNG);">
-						</div>
-					</center>
+					<div class="col-md-4 text-center animate-box">
+						<iframe width="1120" height="630" src="https://www.youtube.com/embed/j2VVeqoqNiE" frameborder="0" allowfullscreen></iframe>
+					</div>
 				</div>
 			</div>
 			<div class="container">
 				<div class="row">
 					<p>
-						Again the speed does seem to stabalise over time, however the drop is not as significant as the drop in the population of particles.
-						It also seems to converge on the minimum value quite quickly providing further proof that the system won't ever converge on the stable
-						pattern I had first imagined.
+						The bottom left map shows the particle filter's estimate map, the black unfilled circle showing the true vehicle position and the 
+						pink filled circle showing the position as estimated by the particle filter. I also figured out the cause of the offset of the clump
+						of particle relative to the true robot position. It was an issue with my display code where a circle is drawn by specifying its top
+						left pixel not its center hence the particles looked offset when in fact they were clumping around the true vehicle position.
 					</p>
 					<p>
-						Though thinking about it now, it does make sense since a system where the particles are all mutually repelling and keeping each other
-						stationary is going to be very unstable so it could never get into that state in the first place. The drop in speed could be thought about
-						in terms of energy since the particles start off with potential energy from being in the repulsive fields which is then converted into kinetic
-						energy. As the fast particles leave the overall energy of the system decreases accounting for that drop in speed. As the particle number levels
-						off so does the average speed. In fact the particle number can be said to decrease from approximately 100 to around 25, a factor of 1/4. The
-						speed drops from around 2 to 1, a factor of 1/2. Since kinetic energy is proportional to veloctiy squared this makes sense since a drop in speed
-						of 1/2 will mean 1/4 less energy and if we assume each particle contributes the same energy to the total energy of the system this accounts for the
-						1/4 drop in particle number.
+						For further work on this project I plan to add functionality where the vehicle only observes obstancles within its line of sight and 
+						builds up a map of its environment by exploring around.
 					</p>
 					<p>
-						One final thing I wondered about was whether the distribution of particles within the cirlce is even or do particles tend to spend more time
-						in some sections of the circle? To test this out I had the app create an image of all the particle paths meaning darker areas would represent
-						areas where particles spent more time. I ended up with the following two images, one over a longer period of time.
-					</p>
+						The following sites were the most helpful as references when I was trying to create this program:
+						<ul>
+							<li> <a href="https://www.usna.edu/Users/cs/taylor/courses/si475/">SI475: Intelligent Robotics</a> </li>
+							<li> <a href="http://etd.library.vanderbilt.edu/available/etd-12062011-193408/unrestricted/Final.pdf">Particle Filter Based SLAM to Map
+								Random Environment Using "IRobot Roomba"</a> </li>
+						</ul>
 				</div>
-			</div>
-			<div class="container">
-				<div class="row">
-					<center>
-						<div class="fh5co-grid-particle-paths animate-box" style="background-image: url(images/particle_simulator/short_time_paths.PNG);">
-						</div>
-					</center>
-				</div>
-			</div>
-			<div class="container">
-				<div class="row">
-					<center>
-						<div class="fh5co-grid-particle-paths animate-box" style="background-image: url(images/particle_simulator/long_time_paths.PNG);">
-						</div>
-					</center>
-				</div>
-			</div>
+			</div>			
 		</div>
 		<!-- END fh5co-work-section -->
 		
