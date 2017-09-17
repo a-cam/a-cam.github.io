@@ -78,7 +78,7 @@
 			<div class="fh5co-overlay-no-gray"></div>
 			<div class="fh5co-cover fh5co-cover_2 text-center" data-stellar-background-ratio="0.5" style="background-image: url(images/backgrounds/night_stars.jpg);">
 				<div class="desc animate-box">
-					<h2>Project Archive</h2>
+					<h2>OpenGL</h2>
 				</div>
 			</div>
 		</div>
@@ -87,50 +87,134 @@
 			<div class="container">
 				<div class="row">
 					<div class="col-md-8 col-md-offset-2 text-center heading-section animate-box">
-						<p>Here I've tried to record some of the interesting things I've been doing and would like to share.</p>
+						<p>
+							I've made some 2D games in the past using graphics engines such as SDL and monogame but I wanted
+							to try and make my own wrapper around OpenGL if I ever wanted to make something in 3D.
+						</p>
+
 					</div>
 				</div>
 			</div>
 			<div class="container">
 				<div class="row">
-					<div class="col-md-4">
-						<div class="fh5co-grid animate-box" style="background-image: url(images/particle_simulator/short_time_paths.PNG);">
-							<a class="image-popup text-center" href="particle_repel.html">
-								<div class="prod-title">
-									<h3>Particle Simulator</h3>
-								</div>
-							</a>
-						</div>
-					</div>
-					<div class="col-md-4">
-						<div class="fh5co-grid animate-box" style="background-image: url(images/slam/particle_population.PNG);">
-							<a class="image-popup text-center" href="slam.html">
-								<div class="prod-title">
-									<h3>SLAM Simulation</h3>
-								</div>
-							</a>
-						</div>
-					</div>
-					<div class="col-md-4">
-						<div class="fh5co-grid animate-box" style="background-image: url(images/pressure_sensor/pcb.PNG);">
-							<a class="image-popup text-center" href="pcb.html">
-								<div class="prod-title">
-									<h3>PCB Design</h3>
-								</div>
-							</a>
-						</div>
-					</div>
-					<div class="col-md-4">
-						<div class="fh5co-grid animate-box" style="background-image: url(images/openGL/scene1.png);">
-							<a class="image-popup text-center" href="openGL.html">
-								<div class="prod-title">
-									<h3>OpenGL</h3>
-								</div>
-							</a>
-						</div>
-					</div>
-				</div>				
+					<p>
+						The current version of my wrapper can load different mesh file types such as .obj with .mtl and display
+						them with a simple lighting system as well.
+					</p>
+					<p>
+						The following screenshots are from a scene I created in blender from free 3D assets which I then exported as 
+						.obj and loaded into my program.
+					</p>
+				</div>
 			</div>
+			<div class="container">
+				<div class="row">
+					<p>
+						This is the scene lit from above.
+					</p>
+				</div>
+			</div>
+			<div class="container">
+				<div class="row">
+					<center>
+						<div class="fh5co-grid-graphs animate-box" style="background-image: url(images/openGL/scene1.png);">
+						</div>
+					</center>
+				</div>
+			</div>
+			<div class="container">
+				<div class="row">
+					<p>
+						And this is the scene with lighting from the side, the source represented as the white cube.
+					</p>
+
+				</div>
+			</div>
+			<div class="container">
+				<div class="row">
+					<center>
+						<div class="fh5co-grid-graphs animate-box" style="background-image: url(images/openGL/scene2.png);">
+						</div>
+					</center>
+				</div>
+			</div>
+
+			<div class="container">
+				<div class="row">
+					<p>
+						There are currently no shadows which is a feature I would like to add in the future.
+					</p>
+
+				</div>
+			</div>
+			<div class="container">
+				<div class="row">
+					<p>
+						The code to generate the scene would look something like this:
+					</p>
+					<pre><code>
+						int main()
+						{
+							Renderer renderer;
+						
+							R_obj light_cube;
+							light_cube.load_model("C:\\Path\\to\\unit_cube.obj", false);
+							light_cube.set_world_location(glm::vec3(1.f, 1.f, 1.f));
+							light_cube.set_is_affected_by_lighting(false);
+							light_cube.build();
+						
+							Point_light point_light;
+							point_light.set_world_location(glm::vec3(0.f, 1.f, 1.f));
+							point_light.set_ambient_color(glm::vec3(0.2f, 0.2f, 0.2f));
+							point_light.set_diffuse_color(glm::vec3(0.5f, 0.5f, 0.5f));
+							point_light.set_specular_color(glm::vec3(0.f, 0.f, 0.f));
+							point_light.set_attenuation_constants(Attenuation_constants(1.0, 0.0014, 0.000007));
+						
+							Directional_light sun_light;
+							sun_light.set_ambient_color(glm::vec3(0.2f, 0.2f, 0.2f));
+							sun_light.set_diffuse_color(glm::vec3(0.5f, 0.5f, 0.5f));
+							sun_light.set_specular_color(glm::vec3(0, 0, 0));
+							sun_light.set_direction(glm::vec3(0, 0, -1.f));
+						
+						
+							R_obj scene;
+							scene.load_model("C:\\Path\\to\\scene.obj", false);
+							scene.set_is_affected_by_lighting(true);
+							scene.set_world_location(glm::vec3(0.f, 0.f, 0.f));
+							scene.build();
+						
+							int loop_counter = 0;
+							while (!renderer.get_should_close_window())
+							{
+								loop_counter++;
+						
+								renderer.add_render_object(&light_cube);
+						
+								renderer.add_render_object(&scene);
+								
+								glm::vec3 light_pos = glm::vec3(
+									0.f, 
+									1.f + 50.f * cos((float)loop_counter/100.f), 
+									1.f + 50.f * sin((float)loop_counter/100.f));
+									
+								point_light.set_world_location(light_pos);
+								light_cube.set_world_location(light_pos);
+						
+								renderer.add_light(&sun_light);
+								renderer.add_light(&point_light);
+								
+								renderer.update();
+							}
+						
+							renderer.clean_up();
+							return 0;
+						}
+					</code></pre>
+				</div>
+			</div>
+
+
+
 		</div>
 		<!-- END fh5co-work-section -->
 		
